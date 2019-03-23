@@ -239,6 +239,7 @@ const classComponentUpdater = {
   },
 };
 
+//这里是检查组件是否应该渲染
 function checkShouldComponentUpdate(
   workInProgress,
   ctor,
@@ -249,6 +250,7 @@ function checkShouldComponentUpdate(
   nextContext,
 ) {
   const instance = workInProgress.stateNode;
+  // 如果当前处理的任务中的实例存在scu函数，就根绝scu来判断
   if (typeof instance.shouldComponentUpdate === 'function') {
     startPhaseTimer(workInProgress, 'shouldComponentUpdate');
     const shouldUpdate = instance.shouldComponentUpdate(
@@ -270,11 +272,14 @@ function checkShouldComponentUpdate(
     return shouldUpdate;
   }
 
+  //判断是否为Pure，如果是pure,则进行一个浅比较对比。
   if (ctor.prototype && ctor.prototype.isPureReactComponent) {
     return (
       !shallowEqual(oldProps, newProps) || !shallowEqual(oldState, newState)
     );
   }
+
+  // 否则就直接返回true
 
   return true;
 }
