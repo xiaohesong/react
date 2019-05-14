@@ -452,6 +452,9 @@ ReactRoot.prototype.createBatch = function(): Batch {
  * @return {boolean} True if the DOM is a valid DOM node.
  * @internal
  */
+
+ // 对应的nodeType可以在../shared/HTMLNodeType查看哦
+ // 比较有意思的是，注释的 react-mount-point-unstable 也是一个有效的容器
 function isValidContainer(node) {
   return !!(
     node &&
@@ -671,14 +674,16 @@ const ReactDOM: Object = {
   },
 
   render(
-    element: React$Element<any>,
-    container: DOMContainer,
-    callback: ?Function,
+    element: React$Element<any>, //React或者元素({type: string | class,, props: { children, className, 等等. },)
+    container: DOMContainer, //容器，下面函数内会对这个进行验证
+    callback: ?Function, // 回调函数，这个你可能会忽视吧
   ) {
+    // 如果不是有效的容器，那就会抛出错误。
     invariant(
       isValidContainer(container),
       'Target container is not a DOM element.',
     );
+    //如果是开发环境，会在minified build的时候移除
     if (__DEV__) {
       warningWithoutStack(
         !container._reactHasBeenPassedToCreateRootDEV,
