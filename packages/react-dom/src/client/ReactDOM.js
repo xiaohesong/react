@@ -367,7 +367,10 @@ function ReactRoot(
   isConcurrent: boolean,
   hydrate: boolean,
 ) {
+  // createContainer就是ReactFiberReconciler中的createContainer
+  // 那里是返回了一个root对象，root对象内包含FiberNode对象。
   const root = createContainer(container, isConcurrent, hydrate);
+  // ReactRoot对象的_internalRoot就是返回的root对象
   this._internalRoot = root;
 }
 ReactRoot.prototype.render = function(
@@ -479,7 +482,14 @@ function getReactRootElementInContainer(container: any) {
 }
 
 function shouldHydrateDueToLegacyHeuristic(container) {
+  // getReactRootElementInContainer就是下面这段代码，根据类型来获取
+  // if (container.nodeType === DOCUMENT_NODE) {
+  //   return container.documentElement;
+  // } else {
+  //   return container.firstChild;
+  // }
   const rootElement = getReactRootElementInContainer(container);
+  // 下面就是如果nodeType是element节点，并且存在属性名称data-reactroot(ROOT_ATTRIBUTE_NAME)
   return !!(
     rootElement &&
     rootElement.nodeType === ELEMENT_NODE &&
@@ -499,12 +509,14 @@ function legacyCreateRootFromDOMContainer(
   container: DOMContainer,
   forceHydrate: boolean,
 ): Root {
+  // 在第一次挂载的时候，shouldHydrate为false
   const shouldHydrate =
     forceHydrate || shouldHydrateDueToLegacyHeuristic(container);
   // First clear any existing content.
   if (!shouldHydrate) {
     let warned = false;
     let rootSibling;
+    // 只要存在container.lastChild，就移除他。
     while ((rootSibling = container.lastChild)) {
       if (__DEV__) {
         if (
@@ -537,12 +549,13 @@ function legacyCreateRootFromDOMContainer(
   }
   // Legacy roots are not async by default.
   const isConcurrent = false;
+  // 返回了一个ReactRoot对象，其中ReactRoot对象中的_internalRoot对象，是一个包含有FirberNode的对象(被实例化的 new)
   return new ReactRoot(container, isConcurrent, shouldHydrate);
 }
 
 function legacyRenderSubtreeIntoContainer(
   parentComponent: ?React$Component<any, any>,
-  children: ReactNodeList,
+  children: ReactNodeList, // ReactEmpty | React$Node;
   container: DOMContainer,
   forceHydrate: boolean,
   callback: ?Function,
@@ -553,9 +566,12 @@ function legacyRenderSubtreeIntoContainer(
 
   // TODO: Without `any` type, Flow says "Property cannot be accessed on any
   // member of intersection type." Whyyyyyy.
+  // 获取container下面的react根container
   let root: Root = (container._reactRootContainer: any);
   if (!root) {
     // Initial mount
+    // 不存在就去挂载，这里就获得了一个对象(简称@obj，也就是实例化之后的ReactRoot对象)
+    // 这个obj包含一个_internalRoot(_internalRoot包含FirberNode对象)，具体看legacyCreateRootFromDOMContainer方法。
     root = container._reactRootContainer = legacyCreateRootFromDOMContainer(
       container,
       forceHydrate,
@@ -568,6 +584,8 @@ function legacyRenderSubtreeIntoContainer(
       };
     }
     // Initial mount should not be batched.
+    // unbatchedUpdates是ReactFiberScheduler.old.js中的unbatchedUpdates, 他会在里面返回一个执行函数(当前传递的参数)的结果
+    // parentComponent在第一次初始化的时候是null,我们暂且看下面的 root.render(children, callback);
     unbatchedUpdates(() => {
       if (parentComponent != null) {
         root.legacy_renderSubtreeIntoContainer(
@@ -576,6 +594,9 @@ function legacyRenderSubtreeIntoContainer(
           callback,
         );
       } else {
+        // 好家伙，这里就回到执行`render`方法，这个`render`是`ReactRoot`中的`render`方法.
+        // 这里的children就是传递过来的element:
+        // 即：React或者元素({type: string | class,, props: { children, className, 等等. },)
         root.render(children, callback);
       }
     });
@@ -693,6 +714,8 @@ const ReactDOM: Object = {
         enableStableConcurrentModeAPIs ? 'createRoot' : 'unstable_createRoot',
       );
     }
+    // 这里就是去调用ReactRoot,实例化它(简称@rr)，并为@rr._internalRoot分配了一个对象(root)，且分配的这个的root对象
+    // 是一个包含FiberNode(也是被实例化了) 的。
     return legacyRenderSubtreeIntoContainer(
       null,
       element,

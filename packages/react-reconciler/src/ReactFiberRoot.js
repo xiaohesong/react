@@ -112,13 +112,16 @@ export function createFiberRoot(
 ): FiberRoot {
   // Cyclic construction. This cheats the type system right now because
   // stateNode is any.
+  
+  // 这个是ReactFiber下创建一个对象，并返回，这里返回的是一个FiberNode对象(被实例化了 new)。
   const uninitializedFiber = createHostRootFiber(isConcurrent);
 
   let root;
+  // NoWork是一个数字代号(0)
   if (enableSchedulerTracing) {
     root = ({
-      current: uninitializedFiber,
-      containerInfo: containerInfo,
+      current: uninitializedFiber, // FiberNode的实例化对象
+      containerInfo: containerInfo, // 就是传递过来的container
       pendingChildren: null,
 
       earliestPendingTime: NoWork,
@@ -148,8 +151,8 @@ export function createFiberRoot(
     }: FiberRoot);
   } else {
     root = ({
-      current: uninitializedFiber,
-      containerInfo: containerInfo,
+      current: uninitializedFiber, // FiberNode的实例化对象
+      containerInfo: containerInfo, // 就是传递过来的container
       pendingChildren: null,
 
       pingCache: null,

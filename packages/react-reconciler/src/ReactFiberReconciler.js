@@ -272,11 +272,15 @@ function findHostInstanceWithWarning(
   return findHostInstance(component);
 }
 
+// 创建一个container, 实际是在ReactFiberRoot内创建
 export function createContainer(
   containerInfo: Container,
   isConcurrent: boolean,
   hydrate: boolean,
 ): OpaqueRoot {
+  // 下面函数是ReactFiberRoot内的函数createFiberRoot
+  // 这个返回一个root对象，里面的current是FiberNode对象(被实例化了 new)；
+  // root对象的containerInfo就是传递过去的这个containerInfo
   return createFiberRoot(containerInfo, isConcurrent, hydrate);
 }
 

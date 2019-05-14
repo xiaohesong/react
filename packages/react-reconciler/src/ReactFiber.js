@@ -443,7 +443,7 @@ export function createHostRootFiber(isConcurrent: boolean): Fiber {
     // Without some nodes in the tree having empty base times.
     mode |= ProfileMode;
   }
-
+  // HostRoot is 3, 这里返回一个FiberNode对象
   return createFiber(HostRoot, null, null, mode);
 }
 
