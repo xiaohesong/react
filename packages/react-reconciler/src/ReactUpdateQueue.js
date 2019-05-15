@@ -217,16 +217,33 @@ function appendUpdateToQueue<State>(
   }
 }
 
+// 初次mount的时候，firber就是root.current对象(FiberNode对象)/?
+// upload参数也是一个对象{...update, payload: {element: (React)element}, callback: callback(_onCommit)}
 export function enqueueUpdate<State>(fiber: Fiber, update: Update<State>) {
   // Update queues are created lazily.
   const alternate = fiber.alternate;
   let queue1;
   let queue2;
+  // 当初始化mount的时候，这个(alternate)是不存在的,初始化为null(见ReactFiber文件中的`FiberNode`函数)
   if (alternate === null) {
     // There's only one fiber.
+    // 下面是初始化updateQueue（createUpdateQueue）
     queue1 = fiber.updateQueue;
     queue2 = null;
+    // 不存在就去 createUpdateQueue
     if (queue1 === null) {
+      // 初次mount的fiber(root)是不存在memoizedState的, 这里的createUpdateQueue的结果为：
+      /* queue1 = fiber.updateQueue = {
+        baseState: fiber.memoizedState,
+        firstUpdate: null,
+        lastUpdate: null,
+        firstCapturedUpdate: null,
+        lastCapturedUpdate: null,
+        firstEffect: null,
+        lastEffect: null,
+        firstCapturedEffect: null,
+        lastCapturedEffect: null,
+      } */
       queue1 = fiber.updateQueue = createUpdateQueue(fiber.memoizedState);
     }
   } else {
@@ -253,8 +270,17 @@ export function enqueueUpdate<State>(fiber: Fiber, update: Update<State>) {
       }
     }
   }
+  // 初次mount的时候，queue2是null(上面的代码有赋值操作queue2=null), 且queue1是一个对象(createUpdateQueue的结果)
   if (queue2 === null || queue1 === queue2) {
     // There's only a single queue.
+    // 初次mount，这里会把queue1的lastUpdate和firstUpdate更新成update, 即:
+    /* if (queue1.lastUpdate === null) {
+      // Queue is empty
+      queue1.firstUpdate = queue1.lastUpdate = update;
+    } else {
+      queue1.lastUpdate.next = update;
+      queue1.lastUpdate = update;
+    } */
     appendUpdateToQueue(queue1, update);
   } else {
     // There are two queues. We need to append the update to both queues,

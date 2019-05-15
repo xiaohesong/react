@@ -1750,6 +1750,7 @@ function resolveRetryThenable(boundaryFiber: Fiber, thenable: Thenable) {
   retryTimedOutBoundary(boundaryFiber);
 }
 
+// fiber为传递进来的current(就是FiberNode对象)
 function scheduleWorkToRoot(fiber: Fiber, expirationTime): FiberRoot | null {
   recordScheduleUpdate();
 
@@ -1764,14 +1765,17 @@ function scheduleWorkToRoot(fiber: Fiber, expirationTime): FiberRoot | null {
   if (fiber.expirationTime < expirationTime) {
     fiber.expirationTime = expirationTime;
   }
+  // 初次mount的时候alternate为null
   let alternate = fiber.alternate;
   if (alternate !== null && alternate.expirationTime < expirationTime) {
     alternate.expirationTime = expirationTime;
   }
   // Walk the parent path to the root and update the child expiration time.
+  // 初次mount的时候，FiberNode中的return初始化为null
   let node = fiber.return;
   let root = null;
   if (node === null && fiber.tag === HostRoot) {
+    // 返回的是ReactFiberRoot中的createFiberRoot函数中的root对象,包含container的值
     root = fiber.stateNode;
   } else {
     while (node !== null) {
@@ -1858,6 +1862,7 @@ export function warnIfNotCurrentlyBatchingInDev(fiber: Fiber): void {
 }
 
 function scheduleWork(fiber: Fiber, expirationTime: ExpirationTime) {
+  // scheduleWorkToRoot主要就是返回root对象(包含fiberNode(当前函数的fiber参数)对象和container信息)
   const root = scheduleWorkToRoot(fiber, expirationTime);
   if (root === null) {
     if (__DEV__) {

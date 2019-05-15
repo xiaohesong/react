@@ -330,10 +330,14 @@ function ReactWork() {
   this._onCommit = this._onCommit.bind(this);
 }
 ReactWork.prototype.then = function(onCommit: () => mixed): void {
+  // 如果didCommit就执行传递进来的函数(cb)
   if (this._didCommit) {
     onCommit();
     return;
   }
+  // 为当前回调集合创建一个临时变量 
+  // 考虑了下貌似没有必要创建一个临时变量，因为这个临时变量也是指定到`this._callbacks`,并且是一个引用类型
+  // 回归正题，这里是将传递到then函数的函数放入callbacks,会在_onCommit方法里进行消费
   let callbacks = this._callbacks;
   if (callbacks === null) {
     callbacks = this._callbacks = [];
@@ -377,15 +381,19 @@ ReactRoot.prototype.render = function(
   children: ReactNodeList,
   callback: ?() => mixed,
 ): Work {
-  const root = this._internalRoot;
+  const root = this._internalRoot; //这里的_internalRoot包含了FiberNode对象
   const work = new ReactWork();
+  // 如果没有传入(undefined)，那就认为是null
   callback = callback === undefined ? null : callback;
   if (__DEV__) {
     warnOnInvalidCallback(callback, 'render');
   }
   if (callback !== null) {
+    // cb放入到队列里(callbacks)
     work.then(callback);
   }
+  // 这里就是去更新container了，看到了吧，上面的cb在work._onCommit里消费，所以这里就传递过去了
+  // 这里经过几次跳转，到了ReactFiberReconciler的scheduleRootUpdate方法,去看看
   updateContainer(children, root, null, work._onCommit);
   return work;
 };

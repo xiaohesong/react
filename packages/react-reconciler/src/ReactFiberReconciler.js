@@ -136,9 +136,21 @@ function scheduleRootUpdate(
     }
   }
 
+  // 返回一个带有expirationTime属性的对象,即：
+  /* return {
+    expirationTime: expirationTime,
+
+    tag: UpdateState | 0,
+    payload: null,
+    callback: null,
+
+    next: null,
+    nextEffect: null,
+  }; */
   const update = createUpdate(expirationTime);
   // Caution: React DevTools currently depends on this property
   // being called "element".
+  // {...update, payload: {element: element}}
   update.payload = {element};
 
   callback = callback === undefined ? null : callback;
@@ -151,9 +163,12 @@ function scheduleRootUpdate(
     );
     update.callback = callback;
   }
+  // {...update, payload: {element: element}, callback}
 
   flushPassiveEffects();
+  // enqueueUpdate主要去更新current的updateQueue, updateQueue中的firstUpdate和lastUpdate设置为update
   enqueueUpdate(current, update);
+  
   scheduleWork(current, expirationTime);
 
   return expirationTime;
